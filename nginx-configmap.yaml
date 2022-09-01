@@ -1,0 +1,24 @@
+# A ConfigMap is basically a key-value pair dictionary that can be used to customize the NGINX default configuration
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-configuration
+  labels:
+    app: nginx-plus
+data:
+  default.conf: |  
+    upstream backend {
+      zone backend 64k;
+      server dummy-deployment:80;
+      server backup-deployment:80 backup;
+    }
+    match conditions {
+      status 200-399;
+    }
+    server {
+      listen 80;
+      location / {	 
+        proxy_pass http://backend;
+        health_check uri=/ready interval=3s fails=1 passes=1;
+      }
+    }
